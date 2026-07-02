@@ -20,12 +20,19 @@
         'approved'     => 'Disahkan',
         'rejected'     => 'Ditolak Direksi',
     ];
+    $grandQty   = collect($rkaps)->sum('TOTAL_QTY');
+    $grandNilai = collect($rkaps)->sum('TOTAL_NILAI');
 @endphp
 
 @section('content')
     @if (session('success'))
         <div class="mb-4 rounded-lg bg-green/10 px-4 py-3 text-sm text-green">
             <i class="fas fa-check-circle mr-1"></i> {{ session('success') }}
+        </div>
+    @endif
+    @if (session('info'))
+        <div class="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            <i class="fas fa-info-circle mr-1"></i> {{ session('info') }}
         </div>
     @endif
 
@@ -50,6 +57,8 @@
                 <tr>
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Produk</th>
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Tahun</th>
+                    <th class="px-4 py-3 text-right font-semibold text-dark/70">Qty (Ton)</th>
+                    <th class="px-4 py-3 text-right font-semibold text-dark/70">Nilai (Rp)</th>
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Status</th>
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Tgl Ajuan</th>
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Catatan</th>
@@ -59,8 +68,10 @@
             <tbody class="divide-y divide-dark/5">
                 @forelse ($rkaps as $r)
                     <tr class="hover:bg-dark/[0.02]">
-                        <td class="px-4 py-3 font-medium text-dark">{{ $r->PRODUK }}</td>
+                        <td class="px-4 py-3 font-medium text-dark">{{ $r->JUMLAH_PRODUK }} Produk</td>
                         <td class="px-4 py-3 text-dark/70">{{ $r->TAHUN }}</td>
+                        <td class="px-4 py-3 text-right text-dark/70">{{ number_format($r->TOTAL_QTY, 3, ',', '.') }}</td>
+                        <td class="px-4 py-3 text-right text-dark/70">Rp {{ number_format($r->TOTAL_NILAI, 0, ',', '.') }}</td>
                         <td class="px-4 py-3">
                             <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $statusColors[$r->STATUS] ?? 'bg-gray-100 text-gray-600' }}">
                                 {{ $statusLabels[$r->STATUS] ?? $r->STATUS }}
@@ -108,12 +119,22 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-8 text-center text-dark/40">
+                        <td colspan="8" class="px-4 py-8 text-center text-dark/40">
                             Belum ada RKAP untuk tahun {{ $tahun }}.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
+            @if (count($rkaps) > 0)
+                <tfoot class="border-t-2 border-dark/20 bg-dark/5">
+                    <tr>
+                        <td colspan="2" class="px-4 py-3 text-right font-bold text-dark">Total Keseluruhan</td>
+                        <td class="px-4 py-3 text-right font-bold text-dark">{{ number_format($grandQty, 3, ',', '.') }}</td>
+                        <td class="px-4 py-3 text-right font-bold text-dark">Rp {{ number_format($grandNilai, 0, ',', '.') }}</td>
+                        <td colspan="4"></td>
+                    </tr>
+                </tfoot>
+            @endif
         </table>
     </div>
 

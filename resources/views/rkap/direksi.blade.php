@@ -6,6 +6,8 @@
 @php
     $statusColors = ['gm_approved'=>'bg-amber-100 text-amber-700','approved'=>'bg-green/10 text-green','rejected'=>'bg-red-100 text-red-600'];
     $statusLabels = ['gm_approved'=>'Menunggu Pengesahan','approved'=>'Disahkan','rejected'=>'Ditolak'];
+    $grandQty   = collect($rkaps)->sum('TOTAL_QTY');
+    $grandNilai = collect($rkaps)->sum('TOTAL_NILAI');
 @endphp
 
 @section('content')
@@ -33,6 +35,8 @@
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Manager</th>
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Validasi GM</th>
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Produk</th>
+                    <th class="px-4 py-3 text-right font-semibold text-dark/70">Qty (Ton)</th>
+                    <th class="px-4 py-3 text-right font-semibold text-dark/70">Nilai (Rp)</th>
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Status</th>
                     <th class="px-4 py-3 text-left font-semibold text-dark/70">Tgl Validasi GM</th>
                     <th class="px-4 py-3 text-center font-semibold text-dark/70">Aksi</th>
@@ -43,7 +47,9 @@
                     <tr class="hover:bg-dark/[0.02]">
                         <td class="px-4 py-3 font-medium text-dark">{{ ucwords(strtolower($r->nama_manager ?? '-')) }}</td>
                         <td class="px-4 py-3 text-dark/60">{{ ucwords(strtolower($r->nama_gm ?? '-')) }}</td>
-                        <td class="px-4 py-3 text-dark/70">{{ $r->PRODUK }}</td>
+                        <td class="px-4 py-3 text-dark/70">{{ $r->JUMLAH_PRODUK }} Produk</td>
+                        <td class="px-4 py-3 text-right text-dark/70">{{ number_format($r->TOTAL_QTY, 3, ',', '.') }}</td>
+                        <td class="px-4 py-3 text-right text-dark/70">Rp {{ number_format($r->TOTAL_NILAI, 0, ',', '.') }}</td>
                         <td class="px-4 py-3">
                             <span class="rounded-full px-2 py-0.5 text-xs font-semibold {{ $statusColors[$r->STATUS] ?? 'bg-gray-100 text-gray-600' }}">
                                 {{ $statusLabels[$r->STATUS] ?? $r->STATUS }}
@@ -77,12 +83,22 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-8 text-center text-dark/40">
+                        <td colspan="8" class="px-4 py-8 text-center text-dark/40">
                             Tidak ada RKAP menunggu pengesahan untuk tahun {{ $tahun }}.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
+            @if (count($rkaps) > 0)
+                <tfoot class="border-t-2 border-dark/20 bg-dark/5">
+                    <tr>
+                        <td colspan="3" class="px-4 py-3 text-right font-bold text-dark">Total Keseluruhan</td>
+                        <td class="px-4 py-3 text-right font-bold text-dark">{{ number_format($grandQty, 3, ',', '.') }}</td>
+                        <td class="px-4 py-3 text-right font-bold text-dark">Rp {{ number_format($grandNilai, 0, ',', '.') }}</td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tfoot>
+            @endif
         </table>
     </div>
 

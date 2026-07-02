@@ -73,7 +73,6 @@
                 <div class="mt-1 text-xs text-white/50">{{ $kpiTahunan['laba_bersih']['capaian'] }}% dari Rp {{ \App\Support\FormatHelper::maskRp($kpiTahunan['laba_bersih']['rkap']) }}</div>
             </div>
         </div>
-        <x-insight-box :items="$insightKpiBulanan" />
 
         <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div class="rounded-xl bg-white p-5 shadow-sm">

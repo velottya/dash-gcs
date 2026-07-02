@@ -81,7 +81,6 @@ class DashboardController extends Controller
             $totalPiutangAktif,
             $piutangJatuhTempo,
             $tahun,
-            $kpi['periode_label'],
         )));
     }
 
@@ -102,7 +101,6 @@ class DashboardController extends Controller
         float $totalPiutangAktif,
         array $piutangJatuhTempo,
         int $tahun,
-        string $periodeLabel,
     ): array {
         $penjualan = $kpiTahunan['penjualan'];
         $sumRealPenjualan = array_sum(array_map('floatval', $penjualanTahunan['real']));
@@ -160,24 +158,7 @@ class DashboardController extends Controller
             }
         }
 
-        $capaianBulanan = [
-            'Penjualan' => $kpiTahunan['penjualan']['capaian'],
-            'Laba Kotor' => $kpiTahunan['laba_kotor']['capaian'],
-            'Laba Operasi' => $kpiTahunan['laba_operasi']['capaian'],
-            'Laba Bersih' => $kpiTahunan['laba_bersih']['capaian'],
-        ];
-        $capaianSorted = $capaianBulanan;
-        arsort($capaianSorted);
-        $labelTertinggi = array_key_first($capaianSorted);
-        $labelTerendah = array_key_last($capaianSorted);
-
-        $insightKpiBulanan = [
-            'Angka Penjualan, Laba Kotor, Laba Operasi, dan Laba Bersih di atas adalah realisasi bulan '.$periodeLabel.' dibandingkan RKAP bulan yang sama.',
-            // 'Capaian tertinggi bulan ini: '.$labelTertinggi.' ('.$capaianSorted[$labelTertinggi].'%); capaian terendah: '.$labelTerendah.' ('.$capaianSorted[$labelTerendah].'%).',
-        ];
-
         return [
-            'insightKpiBulanan' => $insightKpiBulanan,
             'insightPenjualan' => $insightPenjualan,
             'insightLaba' => $insightLaba,
             'insightBebanPemasaran' => $insightBebanPemasaran,

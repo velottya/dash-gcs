@@ -43,8 +43,12 @@ class PenjualanRepository
         // The extra "LAPORAN = 'LABARUGI'" filter (unlike every other TAHUN +
         // ID_REPORT lookup in this codebase, e.g. Dashboard2Repository) was
         // excluding every row for the year, leaving the RKAP bar empty.
+        // PERIODE is a fixed-width CHAR column padded with trailing spaces
+        // (e.g. "202601    "); RTRIM it so the frontend's PERIODE.slice(-2)
+        // month parsing gets "01" instead of the padding, which otherwise
+        // parses to NaN and leaves the RKAP series empty.
         return DB::select(
-            "SELECT Y.PERIODE, Y.NILAI,
+            "SELECT RTRIM(Y.PERIODE) PERIODE, Y.NILAI,
                  ISNULL((SELECT NILAI FROM DASH.MST_RKAP WHERE SUB_LAPORAN = 'Beban Pokok Penjualan' AND PERIODE = Y.PERIODE AND LAPORAN = Y.LAPORAN), 0) HPP_RKAP
              FROM DASH.MST_RKAP Y
              WHERE TAHUN = ? AND ID_REPORT = 'X01'

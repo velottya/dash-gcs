@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\RkapExport;
 use App\Services\RkapRepository;
 use App\Support\Role;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -67,31 +68,46 @@ class RkapController extends Controller
 
     // ── Form: buat RKAP baru ─────────────────────────────────────────────────
 
-    public function create(): View
+    public function create(Request $request): View|RedirectResponse
     {
+        $tahun = (int) $request->query('tahun', now()->year);
+        $nik   = (string) session('nik');
+
+        $existing = $this->repo->findByManagerAndTahun($nik, $tahun);
+        if ($existing) {
+            return redirect()->route('rkap.edit', $existing->ID)
+                ->with('info', "Anda sudah punya pengajuan RKAP tahun {$tahun}. Silakan edit pengajuan yang ada.");
+        }
+
         return view('rkap.form', [
-            'rkap'    => null,
-            'details' => [],
-            'tahun'   => now()->year,
+            'rkap'     => null,
+            'products' => [],
+            'tahun'    => $tahun,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'produk'          => ['required', 'string', 'max:200'],
-            'tahun'           => ['required', 'integer', 'min:2020', 'max:2100'],
-            'qty'             => ['nullable', 'array'],
-            'nilai'           => ['nullable', 'array'],
+            'tahun'               => ['required', 'integer', 'min:2020', 'max:2100'],
+            'products'            => ['required', 'array', 'min:1'],
+            'products.*.stockid'  => ['required', 'string', 'max:10'],
+            'products.*.produk'   => ['required', 'string', 'max:200'],
+            'products.*.qty'      => ['nullable', 'array'],
+            'products.*.nilai'    => ['nullable', 'array'],
         ]);
 
-        $months = $this->buildMonths($request);
-        $id = $this->repo->create(
-            (string) session('nik'),
-            (int) $request->input('tahun'),
-            $request->string('produk')->trim()->toString(),
-            $months
-        );
+        $nik   = (string) session('nik');
+        $tahun = (int) $request->input('tahun');
+
+        $existing = $this->repo->findByManagerAndTahun($nik, $tahun);
+        if ($existing) {
+            return redirect()->route('rkap.edit', $existing->ID)
+                ->with('info', "Anda sudah punya pengajuan RKAP tahun {$tahun}. Silakan edit pengajuan yang ada.");
+        }
+
+        $id = $this->repo->createHeader($nik, $tahun);
+        $this->repo->saveProducts($id, $this->buildProducts($request));
 
         if ($request->input('action') === 'submit') {
             $this->repo->submit($id);
@@ -109,9 +125,9 @@ class RkapController extends Controller
         abort_if(! in_array($rkap->STATUS, ['draft', 'gm_rejected', 'rejected']), 403, 'RKAP tidak dapat diubah dalam status ini.');
 
         return view('rkap.form', [
-            'rkap'    => $rkap,
-            'details' => $this->repo->detailsByMonth($id),
-            'tahun'   => (int) $rkap->TAHUN,
+            'rkap'     => $rkap,
+            'products' => $this->repo->productsGrouped($id),
+            'tahun'    => (int) $rkap->TAHUN,
         ]);
     }
 
@@ -123,11 +139,15 @@ class RkapController extends Controller
         abort_if(! in_array($rkap->STATUS, ['draft', 'gm_rejected', 'rejected']), 403);
 
         $request->validate([
-            'produk' => ['required', 'string', 'max:200'],
+            'products'            => ['required', 'array', 'min:1'],
+            'products.*.stockid'  => ['required', 'string', 'max:10'],
+            'products.*.produk'   => ['required', 'string', 'max:200'],
+            'products.*.qty'      => ['nullable', 'array'],
+            'products.*.nilai'    => ['nullable', 'array'],
         ]);
 
-        $months = $this->buildMonths($request);
-        $this->repo->update($id, $request->string('produk')->trim()->toString(), $months);
+        $this->repo->saveProducts($id, $this->buildProducts($request));
+        $this->repo->markDraft($id);
 
         if ($request->input('action') === 'submit') {
             $this->repo->submit($id);
@@ -146,6 +166,14 @@ class RkapController extends Controller
 
         $this->repo->delete($id);
         return redirect()->route('rkap.index')->with('success', 'Draft RKAP dihapus.');
+    }
+
+    // ── Produk: pencarian untuk combobox (dbo.INVENTORY) ─────────────────────
+
+    public function searchProduk(Request $request): JsonResponse
+    {
+        $keyword = $request->string('q')->trim()->toString();
+        return response()->json($this->repo->searchProduk($keyword));
     }
 
     // ── GM: validasi ─────────────────────────────────────────────────────────
@@ -206,12 +234,12 @@ class RkapController extends Controller
 
     // ── Detail RKAP (JSON, untuk modal) ──────────────────────────────────────
 
-    public function detail(int $id): \Illuminate\Http\JsonResponse
+    public function detail(int $id): JsonResponse
     {
-        $rkap    = $this->repo->find($id);
-        $details = $this->repo->detailsByMonth($id);
+        $rkap     = $this->repo->find($id);
+        $products = $this->repo->productsGrouped($id);
 
-        return response()->json(compact('rkap', 'details'));
+        return response()->json(compact('rkap', 'products'));
     }
 
     // ── Export Excel ──────────────────────────────────────────────────────────
@@ -219,22 +247,33 @@ class RkapController extends Controller
     public function export(int $id)
     {
         $data = $this->repo->exportData($id);
-        $filename = 'RKAP_' . ($data['rkap']->PRODUK ?? $id) . '_' . ($data['rkap']->TAHUN ?? now()->year) . '.xlsx';
+        $filename = 'RKAP_' . ($data['rkap']->NIK_MANAGER ?? $id) . '_' . ($data['rkap']->TAHUN ?? now()->year) . '.xlsx';
         return Excel::download(new RkapExport($data), $filename);
     }
 
     // ── Helper ───────────────────────────────────────────────────────────────
 
-    private function buildMonths(Request $request): array
+    /**
+     * @return array<int, array{stockid: string, produk: string, months: array<int, array{qty: float, nilai: float}>}>
+     */
+    private function buildProducts(Request $request): array
     {
-        $months = [];
-        for ($b = 1; $b <= 12; $b++) {
-            $months[$b] = [
-                'qty'   => (float) ($request->input("qty.{$b}",   0)),
-                'nilai' => (float) ($request->input("nilai.{$b}", 0)),
+        $products = [];
+        foreach ($request->input('products', []) as $p) {
+            $months = [];
+            for ($b = 1; $b <= 12; $b++) {
+                $months[$b] = [
+                    'qty'   => (float) ($p['qty'][$b]   ?? 0),
+                    'nilai' => (float) ($p['nilai'][$b] ?? 0),
+                ];
+            }
+            $products[] = [
+                'stockid' => trim((string) $p['stockid']),
+                'produk'  => trim((string) $p['produk']),
+                'months'  => $months,
             ];
         }
-        return $months;
+        return $products;
     }
 
     private function yearRange(): array

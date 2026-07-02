@@ -87,6 +87,7 @@ Route::middleware('auth.dash')->group(function () {
         // Manager
         Route::middleware('role:' . Role::MANAGER)->group(function () {
             Route::get('/create', [RkapController::class, 'create'])->name('create');
+            Route::get('/search-produk', [RkapController::class, 'searchProduk'])->name('search-produk');
             Route::post('/', [RkapController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [RkapController::class, 'edit'])->name('edit');
             Route::put('/{id}', [RkapController::class, 'updateRkap'])->name('update');
