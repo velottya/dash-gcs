@@ -9,8 +9,9 @@ class AuthService
     public function findByUsername(string $username): ?object
     {
         $rows = DB::select(
-            "SELECT PersonId, nama, data_aktif, jabatan, B.NIK, B.DATE_CREATE, B.ID_LEVEL, B.USERNAME, B.PASSWORD, B.IMG
-             FROM PEGAWAI_SDM A INNER JOIN DASH.MST_USER B ON A.Nik = B.NIK
+            "SELECT A.PersonId, A.nama, A.data_aktif, A.jabatan,
+                    B.NIK, B.DATE_CREATE, B.ID_LEVEL, B.USERNAME, B.PASSWORD, B.IMG, B.STATUS_AKUN AS akun_aktif
+             FROM dbo.PEGAWAI_SDM A INNER JOIN DASH.MST_USER B ON A.Nik = B.NIK
              WHERE B.USERNAME = ?",
             [$username]
         );

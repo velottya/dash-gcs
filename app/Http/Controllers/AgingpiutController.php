@@ -13,11 +13,39 @@ class AgingpiutController extends Controller
 
     public function index(): View
     {
+        $totalOpenAmount = $this->repository->totalOpenAmount();
+        $sektorChart = $this->repository->bySektorChart();
+
         return view('agingpiut.index', [
-            'totalOpenAmount' => $this->repository->totalOpenAmount(),
-            'sektorChart' => $this->repository->bySektorChart(),
+            'totalOpenAmount' => $totalOpenAmount,
+            'sektorChart' => $sektorChart,
             'customers' => $this->repository->customerSummary(),
+            'insightSektor' => $this->insightSektor($totalOpenAmount, $sektorChart),
         ]);
+    }
+
+    /**
+     * @param  array<int, object>  $sektorChart
+     * @return array<int, string>
+     */
+    private function insightSektor(float $totalOpenAmount, array $sektorChart): array
+    {
+        if ($sektorChart === [] || $totalOpenAmount <= 0) {
+            return [];
+        }
+
+        $overdue90 = array_sum(array_map(fn ($r) => (float) $r->JTH91_365 + (float) $r->JTH365, $sektorChart));
+        $pctOverdue90 = round(($overdue90 / $totalOpenAmount) * 100, 1);
+
+        $totalBySektor = array_map(fn ($r) => (float) $r->BLM_JTHTEMPO + (float) $r->JTH1_30 + (float) $r->JTH31_60 + (float) $r->JTH61_90 + (float) $r->JTH91_365 + (float) $r->JTH365, $sektorChart);
+        $maxIdx = array_keys($totalBySektor, max($totalBySektor))[0];
+        $topSektor = trim((string) $sektorChart[$maxIdx]->SEKTOR);
+        $topShare = round(($totalBySektor[$maxIdx] / $totalOpenAmount) * 100, 1);
+
+        return [
+            $pctOverdue90.'% dari piutang aktif sudah jatuh tempo lebih dari 90 hari.',
+            'Sektor '.$topSektor.' menyumbang konsentrasi piutang terbesar ('.$topShare.'% dari total).',
+        ];
     }
 
     public function detailAging(Request $request): JsonResponse

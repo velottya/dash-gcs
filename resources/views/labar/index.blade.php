@@ -3,16 +3,40 @@
 @section('title', 'Laporan Laba / (Rugi)')
 
 @section('content')
+    <div class="mb-3 flex items-center justify-end gap-2">
+        <label for="select-historis-tahun" class="text-sm text-dark/60">Rentang Historis:</label>
+        <select id="select-historis-tahun" onchange="location.href = '{{ route('labar.index') }}?historis=' + this.value"
+            class="rounded-lg border border-dark/15 px-2 py-1 text-sm">
+            @foreach ($historisOptions as $opt)
+                <option value="{{ $opt }}" @selected($opt === $historisTahun)>{{ $opt }} Tahun Terakhir</option>
+            @endforeach
+        </select>
+    </div>
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div class="rounded-xl bg-white p-5 shadow-sm">
-            <h3 class="font-heading mb-3 text-sm font-extrabold text-dark">Historis Penjualan 7 Tahun Terakhir</h3>
+            <div class="mb-3 flex items-center justify-between">
+                <h3 class="font-heading text-sm font-extrabold text-dark">Historis Penjualan {{ $historisTahun }} Tahun Terakhir</h3>
+                <button type="button" onclick="openHistorisDetail()" class="text-xs font-semibold text-green hover:underline">Detail</button>
+            </div>
             <canvas id="histogram9" height="180"></canvas>
         </div>
         <div class="rounded-xl bg-white p-5 shadow-sm">
-            <h3 class="font-heading mb-3 text-sm font-extrabold text-dark">Historis Laba Bersih 7 Tahun Terakhir</h3>
+            <div class="mb-3 flex items-center justify-between">
+                <h3 class="font-heading text-sm font-extrabold text-dark">Historis Laba Bersih {{ $historisTahun }} Tahun Terakhir</h3>
+                <button type="button" onclick="openHistorisDetail()" class="text-xs font-semibold text-green hover:underline">Detail</button>
+            </div>
             <canvas id="histogram10" height="180"></canvas>
         </div>
     </div>
+    <x-insight-box :items="$insightHistoris" class="mt-3" />
+
+    <dialog id="modal-historis-detail" class="w-full max-w-2xl rounded-xl p-0 shadow-2xl backdrop:bg-dark/50">
+        <div class="flex items-center justify-between border-b border-dark/10 px-5 py-4">
+            <h3 class="font-heading font-extrabold text-dark">Historis Penjualan &amp; Laba {{ $historisTahun }} Tahun Terakhir</h3>
+            <button type="button" onclick="document.getElementById('modal-historis-detail').close()" class="text-dark/40 hover:text-dark">&times;</button>
+        </div>
+        <div id="modal-historis-detail-body" class="max-h-[60vh] overflow-y-auto p-5 text-sm">Memuat...</div>
+    </dialog>
 
     <div class="mt-6 rounded-xl bg-white p-5 shadow-sm">
         <div class="flex items-center gap-2">
@@ -120,9 +144,6 @@
     </div>
 @endsection
 
-@push('head')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-@endpush
 
 @push('scripts')
     <script>
@@ -135,31 +156,42 @@
             return nilai > 100 ? 'bg-red-500' : (nilai >= 90 ? 'bg-amber-500' : 'bg-green');
         }
 
-        new Chart(document.getElementById('histogram9'), {
-            type: 'bar',
-            data: {
-                labels: historisData.map(r => r.TAHUN),
-                datasets: [{ label: 'Penjualan (x1000)', data: historisData.map(r => Math.trunc(r.PENJUALAN / 1000)), backgroundColor: '#2F6C3F' }],
-            },
-            options: { responsive: true, plugins: { legend: { display: false } } },
+        document.addEventListener('DOMContentLoaded', function () {
+            new Chart(document.getElementById('histogram9'), {
+                type: 'bar',
+                data: {
+                    labels: historisData.map(r => r.TAHUN),
+                    datasets: [{ label: 'Penjualan (Dalam Ribu)', data: historisData.map(r => Math.trunc(r.PENJUALAN / 1000)), backgroundColor: '#2F6C3F' }],
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } },
+            });
+
+            new Chart(document.getElementById('histogram10'), {
+                data: {
+                    labels: historisData.map(r => r.TAHUN),
+                    datasets: [
+                        { type: 'line', label: 'Net Profit Margin', data: historisData.map(r => (r.LABA / r.PENJUALAN) * 100), borderColor: '#DAA628', yAxisID: 'y1', fill: false },
+                        { type: 'bar', label: 'Laba', data: historisData.map(r => Math.trunc(r.LABA / 1000)), backgroundColor: '#0F261F', yAxisID: 'y' },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { type: 'linear', position: 'left' },
+                        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } },
+                    },
+                },
+            });
         });
 
-        new Chart(document.getElementById('histogram10'), {
-            data: {
-                labels: historisData.map(r => r.TAHUN),
-                datasets: [
-                    { type: 'line', label: 'Net Profit Margin', data: historisData.map(r => (r.LABA / r.PENJUALAN) * 100), borderColor: '#DAA628', yAxisID: 'y1', fill: false },
-                    { type: 'bar', label: 'Laba', data: historisData.map(r => Math.trunc(r.LABA / 1000)), backgroundColor: '#0F261F', yAxisID: 'y' },
-                ],
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { type: 'linear', position: 'left' },
-                    y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } },
-                },
-            },
-        });
+        function openHistorisDetail() {
+            const modal = document.getElementById('modal-historis-detail');
+            modal.showModal();
+
+            const rows = historisData.map(r => `<tr><td class="py-1.5">${r.TAHUN}</td><td class="py-1.5 text-right">${rupiah(r.PENJUALAN)}</td><td class="py-1.5 text-right">${rupiah(r.LABA)}</td><td class="py-1.5 text-right">${((r.LABA / r.PENJUALAN) * 100).toFixed(2)}%</td></tr>`).join('');
+            document.getElementById('modal-historis-detail-body').innerHTML = `<table class="w-full text-sm"><thead><tr class="text-left text-xs uppercase text-dark/40">
+                <th class="py-1">Tahun</th><th class="py-1 text-right">Penjualan</th><th class="py-1 text-right">Laba</th><th class="py-1 text-right">NPM</th></tr></thead><tbody class="divide-y divide-dark/5">${rows}</tbody></table>`;
+        }
 
         function getLRbulan() {
             const periode = document.getElementById('periodeLabar').value;

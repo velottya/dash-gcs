@@ -51,19 +51,23 @@ class LabarRepository
         ], $rows);
     }
 
-    public function historisPenjualanLaba(): array
+    public function historisPenjualanLaba(int $jumlahTahun = 7): array
     {
+        // Includes the current (still-running) year as the latest point, so
+        // the window is always "N tahun terakhir termasuk tahun ini" and
+        // rolls forward automatically as the year changes.
         return DB::select(
             "SELECT XY.TAHUN, XY.PENJUALAN,
                  (SELECT SUM(AMOUNT) * -1 FROM AKUN_JURNAL_DETAIL A INNER JOIN AKUN_ACCOUNT B ON A.ACCOUNT = B.Account
                   WHERE B.LAPORAN = 'LABARUGI' AND YEAR(A.TANGGAL) = XY.TAHUN) LABA
              FROM (
-                 SELECT TOP(7) YEAR(X.tanggal) TAHUN, SUM(X.amount) * -1 PENJUALAN
+                 SELECT TOP(?) YEAR(X.tanggal) TAHUN, SUM(X.amount) * -1 PENJUALAN
                  FROM akun_jurnal_detail X
-                 WHERE X.account = '250100' AND YEAR(TANGGAL) <> YEAR(GETDATE())
+                 WHERE X.account = '250100'
                  GROUP BY YEAR(X.tanggal)
                  ORDER BY YEAR(X.tanggal) DESC
-             ) XY ORDER BY TAHUN"
+             ) XY ORDER BY TAHUN",
+            [$jumlahTahun]
         );
     }
 

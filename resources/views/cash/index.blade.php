@@ -4,6 +4,8 @@
 @section('subtitle', \App\Support\FormatHelper::getPeriodeTrans(\App\Support\FormatHelper::periodeTrans()))
 
 @section('content')
+    <x-insight-box :items="$insightCash" class="mb-6" />
+
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div class="rounded-xl bg-white p-5 shadow-sm lg:col-span-5">
             <h3 class="font-heading mb-3 text-sm font-extrabold text-dark">Cash In per Wilayah</h3>
@@ -52,7 +54,10 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="bg-dark/5 text-left text-xs uppercase text-dark/50">
-                        <th class="px-3 py-2">Kode</th><th class="px-3 py-2">Customer</th><th class="px-3 py-2 text-right">Piutang Jth Tempo</th><th class="px-3 py-2 text-right">Cash In</th>
+                        <th class="px-3 py-2" rowspan="2">Kode</th><th class="px-3 py-2" rowspan="2">Customer</th><th class="px-3 py-2 text-center">Piutang Jth Tempo</th><th class="px-3 py-2 text-center">Cash In</th>
+                    </tr>
+                    <tr class="bg-dark/5 text-center text-xs uppercase text-dark/50">
+                        <th class="px-3 py-1">Bln Ini</th><th class="px-3 py-1">Bln Ini</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-dark/5">

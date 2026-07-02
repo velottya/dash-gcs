@@ -32,3 +32,34 @@ body {
 .font-body {
     font-family: var(--font-body);
 }
+
+/* Tailwind's preflight resets margin to 0 on every element, including
+   ::backdrop, which overrides the browser's native `dialog:modal { margin:
+   auto }` centering rule and pins modals to the top-left corner. */
+dialog:modal {
+    margin: auto;
+}
+
+/* Minimized sidebar: shrink to icon-only width and hide labels/submenus
+   (no transition/animation — instant toggle). */
+#sidebar.collapsed {
+    width: 4.5rem;
+}
+
+#sidebar.collapsed .sidebar-label,
+#sidebar.collapsed .sidebar-submenu {
+    display: none;
+}
+
+/* Chrome injects its own "reveal password" / "saved credentials" icon inside
+   password inputs, which overlaps our custom eye-toggle button (and, via its
+   floating suggestions popup, our custom search dropdowns). Hide the native
+   icon so only our own controls show. */
+input[type='password']::-webkit-credentials-auto-fill-button,
+input[type='password']::-webkit-strong-password-auto-fill-button {
+    visibility: hidden;
+    display: none !important;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+}

@@ -16,7 +16,7 @@
 
     <div class="pointer-events-none fixed inset-0 z-0 flex h-full w-full justify-between">
         <x-supergrafis position="top-left" size="w-48 h-48 md:w-64 md:h-64" class="absolute top-0 left-0" />
-        <x-supergrafis position="bottom-right" size="w-72 h-72 md:w-[600px] md:h-[600px]" class="absolute bottom-0 right-0" />
+        <x-supergrafis position="bottom-right" size="w-48 h-48 md:w-64 md:h-64" class="absolute bottom-0 right-0" />
     </div>
 
     <div class="relative z-10 flex min-h-screen items-center justify-center overflow-y-auto px-4 py-12">

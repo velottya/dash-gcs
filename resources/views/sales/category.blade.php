@@ -13,22 +13,21 @@
     </div>
 @endsection
 
-@push('head')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-@endpush
 
 @push('scripts')
     <script>
-        new Chart(document.getElementById('chart-{{ $chartId }}'), {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
-                datasets: [
-                    { label: 'Real', data: [], backgroundColor: '#2F6C3F' },
-                    { label: 'RKAP', data: [], backgroundColor: '#DAA628' },
-                ],
-            },
-            options: { responsive: true, plugins: { legend: { display: false } } },
+        document.addEventListener('DOMContentLoaded', function () {
+            new Chart(document.getElementById('chart-{{ $chartId }}'), {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
+                    datasets: [
+                        { label: 'Real', data: [], backgroundColor: '#2F6C3F' },
+                        { label: 'RKAP', data: [], backgroundColor: '#DAA628' },
+                    ],
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } },
+            });
         });
     </script>
 @endpush

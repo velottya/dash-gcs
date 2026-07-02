@@ -15,7 +15,7 @@ class AuthController extends Controller
     public function showLogin(): View|RedirectResponse
     {
         if (session('login_status')) {
-            return redirect()->route('dashboard1');
+            return redirect()->route('dashboard');
         }
 
         return view('auth.login');
@@ -34,8 +34,8 @@ class AuthController extends Controller
             return back()->withInput()->with('message', 'User tidak ditemukan!');
         }
 
-        if ($user->data_aktif !== 'Aktif') {
-            return back()->withInput()->with('message', 'Username Anda Tidak Aktif!');
+        if ($user->data_aktif !== 'Aktif' || $user->akun_aktif !== 'Aktif') {
+            return back()->withInput()->with('message', 'Akun Anda tidak aktif!');
         }
 
         if (! Hash::check($request->input('password'), $user->PASSWORD)) {
@@ -55,7 +55,7 @@ class AuthController extends Controller
 
         $this->auth->recordLogin($user->NIK, $user->USERNAME);
 
-        return redirect()->route('dashboard1');
+        return redirect()->route('dashboard');
     }
 
     public function logout(Request $request): RedirectResponse

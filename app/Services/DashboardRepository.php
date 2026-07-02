@@ -45,10 +45,8 @@ class DashboardRepository
     /**
      * Headline KPI row: penjualan, HPP, dan laba kotor bulan berjalan vs RKAP.
      */
-    public function kpiBulanIni(): array
+    public function kpiBulanIni(string $periode): array
     {
-        $periode = FormatHelper::periodeTrans();
-
         $penjualan = DB::selectOne(
             "SELECT ISNULL(SUM(AMOUNT * -1), 0) AMOUNT FROM AKUN_JURNAL_DETAIL WHERE PERIODE = ? AND ACCOUNT = '250100'",
             [$periode]
@@ -89,10 +87,8 @@ class DashboardRepository
      * Pencapaian penjualan per sektor pada periode berjalan, dengan tombol
      * drill-down ke sektorDetail() (sama seperti tabel sektor di Dashboard1 lama).
      */
-    public function sektorAchievement(): array
+    public function sektorAchievement(string $periode): array
     {
-        $periode = FormatHelper::periodeTrans();
-
         $rows = DB::select(
             "SELECT ID_SEKTOR, KODE_SEKTOR, SUM(NILAI) RKAP,
                  (SELECT SUM(AMOUNT) * -1 FROM AKUN_JURNAL_DETAIL A INNER JOIN INVENTORY B ON A.OBJECTID = B.REFSTOCK
@@ -118,10 +114,8 @@ class DashboardRepository
         }, $rows);
     }
 
-    public function sektorDetail(string $idSektor): array
+    public function sektorDetail(string $idSektor, string $periode): array
     {
-        $periode = FormatHelper::periodeTrans();
-
         $rows = DB::select(
             "SELECT SUBWIL, KODE_SEKTOR, NAMA_BARANG, QTY_REAL, QTY_RKAP, SATUAN, NILAI_REAL, NILAI_RKAP
              FROM (

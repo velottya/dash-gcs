@@ -55,6 +55,14 @@ class FormatHelper
     }
 
     /**
+     * 2-decimal percentage formatting for ratios like GPM/OPM/NPM.
+     */
+    public static function percent(int|float $val): string
+    {
+        return number_format((float) $val, 2, ',', '.');
+    }
+
+    /**
      * Bootstrap progress-bar color tier for an achievement percentage
      * (format_helper.php::barColorPos).
      */
@@ -123,5 +131,43 @@ class FormatHelper
     public static function bulanList(): array
     {
         return self::BULAN;
+    }
+
+    /**
+     * Short Indonesian trend phrase comparing a current value against a prior
+     * one, e.g. "naik 12,5%" / "turun 3,2%" / "stabil". Used to turn raw
+     * chart series into a one-line insight without re-deriving the same
+     * phrasing on every page.
+     */
+    public static function trendLabel(int|float $current, int|float $prior): string
+    {
+        if ($prior == 0) {
+            return $current == 0 ? 'stabil' : 'naik dari nol';
+        }
+
+        $delta = (($current - $prior) / abs($prior)) * 100;
+
+        if (abs($delta) < 0.5) {
+            return 'stabil';
+        }
+
+        return ($delta > 0 ? 'naik ' : 'turun ').self::percent(abs($delta)).'%';
+    }
+
+    /**
+     * Short Indonesian phrase for an achievement percentage against target,
+     * using the same tiers as barColorPos() so the wording matches the color.
+     */
+    public static function achievementLabel(int|float $capaian): string
+    {
+        if ($capaian < 75) {
+            return 'di bawah target';
+        }
+
+        if ($capaian <= 90) {
+            return 'mendekati target';
+        }
+
+        return 'tercapai';
     }
 }

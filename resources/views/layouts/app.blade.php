@@ -28,21 +28,54 @@
                     @endif
                 </div>
 
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
                     <div class="text-right">
                         <p class="text-sm font-semibold text-dark">{{ session('nama') ?? session('username') }}</p>
-                        <p class="text-xs text-dark/50">{{ session('jabatan') }}</p>
+                        <p class="text-xs text-dark/50">{{ \App\Support\Role::label((int) session('level')) }}</p>
                     </div>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button
-                            type="submit"
-                            class="flex h-9 w-9 items-center justify-center rounded-full bg-dark/5 text-dark/60 transition hover:bg-red-50 hover:text-red-600"
-                            title="Keluar">
-                            <i class="fas fa-sign-out-alt"></i>
+
+                    <div class="relative">
+                        <button id="profile-toggle" type="button"
+                            class="flex h-9 w-9 items-center justify-center rounded-full bg-gold text-sm font-black text-dark transition hover:ring-2 hover:ring-gold hover:ring-offset-1"
+                            title="Profil">
+                            {{ strtoupper(substr(session('nama') ?? session('username') ?? 'U', 0, 1)) }}
                         </button>
-                    </form>
+
+                        <div id="profile-menu"
+                            class="absolute right-0 top-full z-50 mt-2 hidden w-48 origin-top-right rounded-xl border border-dark/10 bg-white py-1 shadow-lg">
+                            <a href="{{ route('profile.user') }}"
+                                class="flex items-center gap-2 px-4 py-2 text-sm text-dark transition hover:bg-dark/5">
+                                <i class="fas fa-user w-4 text-center text-dark/40"></i> Profil Saya
+                            </a>
+                            <a href="{{ route('profile.company') }}"
+                                class="flex items-center gap-2 px-4 py-2 text-sm text-dark transition hover:bg-dark/5">
+                                <i class="fas fa-building w-4 text-center text-dark/40"></i> Profil Perusahaan
+                            </a>
+                            <div class="my-1 border-t border-dark/10"></div>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit"
+                                    class="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 transition hover:bg-red-50">
+                                    <i class="fas fa-sign-out-alt w-4 text-center"></i> Keluar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
+
+                <script>
+                    (function () {
+                        const toggle = document.getElementById('profile-toggle');
+                        const menu = document.getElementById('profile-menu');
+                        toggle.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            menu.classList.toggle('hidden');
+                        });
+                        document.addEventListener('click', function () {
+                            menu.classList.add('hidden');
+                        });
+                    })();
+                </script>
             </header>
 
             <main class="flex-1 overflow-y-auto p-6">

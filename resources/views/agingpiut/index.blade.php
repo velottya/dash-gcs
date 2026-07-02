@@ -7,11 +7,16 @@
         <div class="rounded-xl bg-white p-6 shadow-sm">
             <div class="flex items-center justify-between">
                 <h3 class="font-heading text-sm font-extrabold text-dark">Total Piutang Aktif</h3>
-                <span class="rounded-lg bg-dark px-4 py-2 font-heading font-bold text-white">
-                    Rp {{ \App\Support\FormatHelper::maskRp($totalOpenAmount) }}
-                </span>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="openSektorChartDetail()" class="rounded-lg border border-green/30 px-3 py-1 text-xs text-green transition hover:bg-green hover:text-white">Detail per Sektor</button>
+                    <span class="rounded-lg bg-dark px-4 py-2 font-heading font-bold text-white">
+                        Rp {{ \App\Support\FormatHelper::maskRp($totalOpenAmount) }}
+                    </span>
+                </div>
             </div>
-            <canvas id="chart-sektor" class="mt-4" height="100"></canvas>
+            <span class="mt-4 inline-block rounded-lg bg-green px-3 py-1 text-xs font-semibold text-white">(Dalam Ribu)</span>
+            <canvas id="chart-sektor" class="mt-2" height="100"></canvas>
+            <x-insight-box :items="$insightSektor" />
         </div>
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -95,31 +100,40 @@
     </dialog>
 @endsection
 
-@push('head')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-@endpush
 
 @push('scripts')
     <script>
         const sektorChart = @json($sektorChart);
 
-        new Chart(document.getElementById('chart-sektor'), {
-            type: 'bar',
-            data: {
-                labels: sektorChart.map(r => r.SEKTOR),
-                datasets: [
-                    { label: 'Blm Jth Tempo', data: sektorChart.map(r => r.BLM_JTHTEMPO), backgroundColor: '#0F261F' },
-                    { label: '1-30', data: sektorChart.map(r => r.JTH1_30), backgroundColor: '#2F6C3F' },
-                    { label: '31-60', data: sektorChart.map(r => r.JTH31_60), backgroundColor: '#3C8A51' },
-                    { label: '61-90', data: sektorChart.map(r => r.JTH61_90), backgroundColor: '#DAA628' },
-                    { label: '91-365', data: sektorChart.map(r => r.JTH91_365), backgroundColor: '#F6D30F' },
-                    { label: '>365', data: sektorChart.map(r => r.JTH365), backgroundColor: '#ef4444' },
-                ],
-            },
-            options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } },
+        document.addEventListener('DOMContentLoaded', function () {
+            new Chart(document.getElementById('chart-sektor'), {
+                type: 'bar',
+                data: {
+                    labels: sektorChart.map(r => r.SEKTOR),
+                    datasets: [
+                        { label: 'Blm Jth Tempo', data: sektorChart.map(r => r.BLM_JTHTEMPO), backgroundColor: '#0F261F' },
+                        { label: '1-30', data: sektorChart.map(r => r.JTH1_30), backgroundColor: '#2F6C3F' },
+                        { label: '31-60', data: sektorChart.map(r => r.JTH31_60), backgroundColor: '#3C8A51' },
+                        { label: '61-90', data: sektorChart.map(r => r.JTH61_90), backgroundColor: '#DAA628' },
+                        { label: '91-365', data: sektorChart.map(r => r.JTH91_365), backgroundColor: '#F6D30F' },
+                        { label: '>365', data: sektorChart.map(r => r.JTH365), backgroundColor: '#ef4444' },
+                    ],
+                },
+                options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } },
+            });
         });
 
         function rupiah(v) { return Number(v).toLocaleString('id-ID'); }
+
+        function openSektorChartDetail() {
+            const modal = document.getElementById('modal-list');
+            document.getElementById('modal-list-title').textContent = 'Total Piutang per Sektor (Dalam Ribu)';
+            modal.showModal();
+
+            const rows = sektorChart.map(r => `<tr><td class="py-1.5">${r.SEKTOR}</td><td class="py-1.5 text-right">${rupiah(r.BLM_JTHTEMPO)}</td><td class="py-1.5 text-right">${rupiah(r.JTH1_30)}</td><td class="py-1.5 text-right">${rupiah(r.JTH31_60)}</td><td class="py-1.5 text-right">${rupiah(r.JTH61_90)}</td><td class="py-1.5 text-right">${rupiah(r.JTH91_365)}</td><td class="py-1.5 text-right">${rupiah(r.JTH365)}</td></tr>`).join('');
+            document.getElementById('modal-list-body').innerHTML = `<table class="w-full text-sm"><thead><tr class="text-left text-xs uppercase text-dark/40">
+                <th class="py-1">Sektor</th><th class="py-1 text-right">Blm Jth Tempo</th><th class="py-1 text-right">1-30</th><th class="py-1 text-right">31-60</th><th class="py-1 text-right">61-90</th><th class="py-1 text-right">91-365</th><th class="py-1 text-right">&gt;365</th></tr></thead><tbody class="divide-y divide-dark/5">${rows}</tbody></table>`;
+        }
 
         function loadCustomerDetail(koderekanan) {
             const body = document.getElementById('customer-body-' + koderekanan);
