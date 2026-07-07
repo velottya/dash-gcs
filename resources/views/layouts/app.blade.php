@@ -34,11 +34,16 @@
                         <p class="text-xs text-dark/50">{{ \App\Support\Role::label((int) session('level')) }}</p>
                     </div>
 
+                    @php $headerPhotoUrl = \App\Support\FormatHelper::profilePhotoUrl(session('img')); @endphp
                     <div class="relative">
                         <button id="profile-toggle" type="button"
-                            class="flex h-9 w-9 items-center justify-center rounded-full bg-gold text-sm font-black text-dark transition hover:ring-2 hover:ring-gold hover:ring-offset-1"
+                            class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gold text-sm font-black text-dark shadow-sm ring-2 ring-gold/25 transition hover:ring-gold hover:ring-offset-1"
                             title="Profil">
-                            {{ strtoupper(substr(session('nama') ?? session('username') ?? 'U', 0, 1)) }}
+                            @if ($headerPhotoUrl)
+                                <img src="{{ $headerPhotoUrl }}" alt="Foto profil" class="h-full w-full object-cover">
+                            @else
+                                {{ strtoupper(substr(session('nama') ?? session('username') ?? 'U', 0, 1)) }}
+                            @endif
                         </button>
 
                         <div id="profile-menu"

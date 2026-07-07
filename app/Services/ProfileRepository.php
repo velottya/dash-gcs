@@ -34,6 +34,16 @@ class ProfileRepository
         DB::update('UPDATE DASH.MST_USER SET PASSWORD = ? WHERE NIK = ?', [$hashed, $nik]);
     }
 
+    public function getImg(string $nik): ?string
+    {
+        return DB::selectOne('SELECT IMG FROM DASH.MST_USER WHERE NIK = ?', [$nik])?->IMG;
+    }
+
+    public function updateImg(string $nik, string $filename): void
+    {
+        DB::update('UPDATE DASH.MST_USER SET IMG = ? WHERE NIK = ?', [$filename, $nik]);
+    }
+
     // ── User extra (phone, email — stored in DASH.USER_EXTRA) ───────────────
 
     public function getUserExtra(string $nik): array

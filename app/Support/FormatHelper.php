@@ -2,8 +2,25 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Storage;
+
 class FormatHelper
 {
+    /**
+     * Resolve DASH.MST_USER.IMG into a usable photo URL, or null if it's
+     * empty or doesn't point at an actual uploaded file (e.g. legacy rows
+     * where IMG just mirrors NIK/username with no real photo on disk).
+     */
+    public static function profilePhotoUrl(?string $img): ?string
+    {
+        $img = trim((string) $img);
+        if ($img === '' || ! Storage::disk('public')->exists('profile_photos/'.$img)) {
+            return null;
+        }
+
+        return asset('storage/profile_photos/'.$img);
+    }
+
     /**
      * Achievement percentage of realisasi against target (ported from
      * format_helper.php::targetPersen).

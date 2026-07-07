@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Services\ProfileRepository;
+use App\Support\FormatHelper;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -22,14 +24,31 @@ class ProfileController extends Controller
             'lastLogin'    => $this->repository->lastLogin($nik),
             'fallbackNama' => $request->session()->get('nama'),
             'fallbackJabatan' => $request->session()->get('jabatan'),
+            'photoUrl'     => FormatHelper::profilePhotoUrl($request->session()->get('img')),
         ]);
     }
 
     public function updateUser(Request $request): RedirectResponse
     {
+        $request->validate([
+            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
+        ]);
+
         $nik  = (string) $request->session()->get('nik', '');
         $data = $request->only(['phone', 'email']);
         $this->repository->saveUserExtra($nik, array_map('trim', $data));
+
+        if ($request->hasFile('foto')) {
+            $old      = $this->repository->getImg($nik);
+            $filename = $nik.'_'.now()->timestamp.'.'.$request->file('foto')->extension();
+            $request->file('foto')->storeAs('profile_photos', $filename, 'public');
+            $this->repository->updateImg($nik, $filename);
+            $request->session()->put('img', $filename);
+
+            if ($old && Storage::disk('public')->exists('profile_photos/'.$old)) {
+                Storage::disk('public')->delete('profile_photos/'.$old);
+            }
+        }
 
         return redirect()->route('profile.user')->with('success', 'Profil berhasil diperbarui.');
     }
